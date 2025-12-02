@@ -71,7 +71,7 @@ def decrypt_data(encrypted_data: bytes, password: str) -> bytes:
 if __name__ == "__main__":
     import os
 
-    filename = "xxxx.csv"
+    filename = "GeneratedData.csv"
     
     #create dummy if not exist
     if not os.path.exists(filename):
@@ -88,3 +88,50 @@ if __name__ == "__main__":
     print("   TESTING ENKRIPSI FILE (AES-256)")
     print(f"{'='*40}")
 
+    try:
+        # read file
+        print(f"1. read original file: {filename}")
+        with open(filename, "rb") as f:
+            original_bytes = f.read()
+        print(f"   -> size: {len(original_bytes)} bytes")
+
+        # encrypt
+        print(f"2. encrypt with password: '{password_input}'")
+        encrypted_bytes = encrypt_data(original_bytes, password_input)
+        
+        # save to .enc (encoded file)
+        enc_filename = filename + ".enc"
+        with open(enc_filename, "wb") as f:
+            f.write(encrypted_bytes)
+        print(f"    -> (encrypted) file saved: {enc_filename}")
+        print(f"    -> (Header): {encrypted_bytes.hex()[:32]}...")
+
+        # decryption process
+        print(f"3. decrypting file...")
+        # read .enc from disk
+        with open(enc_filename, "rb") as f:
+            read_encrypted_bytes = f.read()
+            
+        decrypted_bytes = decrypt_data(read_encrypted_bytes, password_input)
+        
+        # save .decrypted
+        dec_filename = "recovered_" + filename
+        with open(dec_filename, "wb") as f:
+            f.write(decrypted_bytes)
+        print(f"    -> file recovery saved: {dec_filename}")
+
+        # validate integrity
+        print(f"Compare original data vs decrypted")
+        if original_bytes == decrypted_bytes:
+            print("\n[SUCCESS]")
+            print("file recovered:")
+            print("-" * 20)
+            print(decrypted_bytes.decode()) # decode bytes to string
+            print("-" * 20)
+        else:
+            print("\n[FAIL].")
+
+    except ValueError as ve:
+        print(f"\n[ERROR] Failed: {ve}")
+    except Exception as e:
+        print(f"\n[ERROR] System fail: {e}")
