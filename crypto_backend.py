@@ -37,18 +37,22 @@ def encrypt_data(data: bytes, password: str) -> bytes:
     return salt + iv + ciphertext
 
 def decrypt_data(encrypted_data: bytes, password: str) -> bytes:
-    salt = encrypted_data[:SALT_SIZE]
-    iv = encrypted_data[SALT_SIZE : SALT_SIZE + IV_SIZE]
-    ciphertext = encrypted_data[SALT_SIZE + IV_SIZE:]
+    try:
+        salt = encrypted_data[:SALT_SIZE]
+        iv = encrypted_data[SALT_SIZE : SALT_SIZE + IV_SIZE]
+        ciphertext = encrypted_data[SALT_SIZE + IV_SIZE:]
 
-    key = derive_key(password, salt)
+        key = derive_key(password, salt)
 
-    cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=default_backend())
-    decryptor = cipher.decryptor()
+        cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=default_backend())
+        decryptor = cipher.decryptor()
 
-    padded_data = decryptor.update(ciphertext) + decryptor.finalize()
+        padded_data = decryptor.update(ciphertext) + decryptor.finalize()
 
-    unpadder = padding.PKCS7(BLOCK_SIZE).unpadder()
-    original_data = unpadder.update(padded_data) + unpadder.finalize()
+        unpadder = padding.PKCS7(BLOCK_SIZE).unpadder()
+        original_data = unpadder.update(padded_data) + unpadder.finalize()
 
-    return original_data
+        return original_data
+
+    except Exception as e:
+        raise ValueError("Gagal dekripsi! Password salah atau file rusak.")
