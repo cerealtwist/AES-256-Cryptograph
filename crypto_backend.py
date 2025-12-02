@@ -67,24 +67,24 @@ def decrypt_data(encrypted_data: bytes, password: str) -> bytes:
     except Exception as e:
         raise ValueError("Decryption failed!")
     
-# Unit testing
+# Unit testing (manual input)
 if __name__ == "__main__":
-    csv_content = "ID,Name,Score\n1,gres,90\n2,faiz,85"
-    password_input = "rahasia123"
+    import os
 
-    print(f"[TEST] Original Data:\n{csv_content}")
-    print("-" * 20)
-    encrypted = encrypt_data(csv_content.encode(), password_input)
-    print(f"[TEST] Encryped ({len(encrypted)} bytes): {encrypted.hex()[:30]}...")
+    filename = "xxxx.csv"
     
-    try:
-        decrypted = decrypt_data(encrypted, password_input)
-        print("-" * 20)
-        print(f"[TEST] Decryption output:\n{decrypted.decode()}")
-        
-        if csv_content == decrypted.decode():
-            print("\n[SUCCESS] Data integrity (terjaga)")
-        else:
-            print("\n[FAIL] Data changed")
-    except ValueError as ve:
-        print(f"[ERROR] {ve}")
+    #create dummy if not exist
+    if not os.path.exists(filename):
+        print(f"[SETUP] Create dummy file '{filename}'...")
+        with open(filename, "w") as f:
+            f.write("ID,Name,GPA,Subject\n")
+            f.write("101,Gres,3.5,Data Science\n")
+            f.write("102,Faiz,3.8,Informatika\n")
+            f.write("103,Haikal,3.2,Sistem Informasi")
+    
+    password_input = "kelompokkeamanannyadata##"
+
+    print(f"\n{'='*40}")
+    print("   TESTING ENKRIPSI FILE (AES-256)")
+    print(f"{'='*40}")
+
