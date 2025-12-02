@@ -65,4 +65,26 @@ def decrypt_data(encrypted_data: bytes, password: str) -> bytes:
         return original_data
 
     except Exception as e:
-        raise ValueError("Gagal dekripsi! Password salah atau file rusak.")
+        raise ValueError("Decryption failed!")
+    
+# Unit testing
+if __name__ == "__main__":
+    csv_content = "ID,Name,Score\n1,gres,90\n2,faiz,85"
+    password_input = "rahasia123"
+
+    print(f"[TEST] Original Data:\n{csv_content}")
+    print("-" * 20)
+    encrypted = encrypt_data(csv_content.encode(), password_input)
+    print(f"[TEST] Encryped ({len(encrypted)} bytes): {encrypted.hex()[:30]}...")
+    
+    try:
+        decrypted = decrypt_data(encrypted, password_input)
+        print("-" * 20)
+        print(f"[TEST] Decryption output:\n{decrypted.decode()}")
+        
+        if csv_content == decrypted.decode():
+            print("\n[SUCCESS] Data integrity (terjaga)")
+        else:
+            print("\n[FAIL] Data changed")
+    except ValueError as ve:
+        print(f"[ERROR] {ve}")
