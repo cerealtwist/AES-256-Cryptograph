@@ -35,3 +35,20 @@ def encrypt_data(data: bytes, password: str) -> bytes:
     ciphertext = encryptor.update(padded_data) + encryptor.finalize()
 
     return salt + iv + ciphertext
+
+def decrypt_data(encrypted_data: bytes, password: str) -> bytes:
+    salt = encrypted_data[:SALT_SIZE]
+    iv = encrypted_data[SALT_SIZE : SALT_SIZE + IV_SIZE]
+    ciphertext = encrypted_data[SALT_SIZE + IV_SIZE:]
+
+    key = derive_key(password, salt)
+
+    cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=default_backend())
+    decryptor = cipher.decryptor()
+
+    padded_data = decryptor.update(ciphertext) + decryptor.finalize()
+
+    unpadder = padding.PKCS7(BLOCK_SIZE).unpadder()
+    original_data = unpadder.update(padded_data) + unpadder.finalize()
+
+    return original_data
