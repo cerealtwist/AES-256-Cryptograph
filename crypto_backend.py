@@ -3,7 +3,6 @@ import struct
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import padding, hashes, hmac
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-from cryptography.hazmat.backends import default_backend
 
 # CONFIGURATION
 MAGIC_HEADER = b"DATASEC02" 
@@ -92,7 +91,7 @@ def decrypt_data(data: bytes, password: str) -> bytes:
 
         # HMAC Verification
         verify_content = data[:-32]
-        h = hmac.HMAC(mac_key, hashes.SHA256(), backend=default_backend())
+        h = hmac.HMAC(mac_key, hashes.SHA256())
         h.update(verify_content)
 
         # raise InvalidSignature if different from tag
