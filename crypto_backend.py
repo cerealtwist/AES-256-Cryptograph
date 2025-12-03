@@ -1,24 +1,38 @@
 import os
+import struct
+import hmac
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import padding
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.backends import default_backend
 
+# CONFIGURATION
+MAGIC_HEADER = b"DATASEC02" 
+VERSION = 1    
 KEY_SIZE = 32
-BLOCK_SIZE = 128
+HMAC_KEY_SIZE = 32
 SALT_SIZE = 16
 IV_SIZE = 16
+PBKDF2_ITERATIONS = 200000
+BLOCK_SIZE = 128
 
+# KEY DERIVATION (SPLIT KEY)
 def derive_key(password: str, salt: bytes) -> bytes:
     kdf = PBKDF2HMAC(
         algorithm=hashes.SHA256(),
-        length=KEY_SIZE,
+        length=KEY_SIZE + HMAC_KEY_SIZE,
         salt=salt,
-        iterations=100000,
+        iterations=PBKDF2_ITERATIONS,
         backend=default_backend()
     )
-    return kdf.derive(password.encode())
+    full_key = kdf.derive(password.encode())
+    
+    # Slicing key
+    enc_key = full_key[:KEY_SIZE] # first 32 bytes
+    mac_key = full_key[KEY_SIZE:] # rest 32 bytes
+
+    return enc_key, mac_key
 
 def encrypt_data(data: bytes, password: str) -> bytes:
     #Generate Random Salt 
