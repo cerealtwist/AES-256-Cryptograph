@@ -71,8 +71,6 @@ def decrypt_data(encrypted_data: bytes, password: str) -> bytes:
 if __name__ == "__main__":
     import os
 
-    filename = "GeneratedData.csv"
-    
     # Call dummy function from crypto_dummy.py
     try:
         from crypto_dummy import create_dummy_csv
@@ -80,7 +78,9 @@ if __name__ == "__main__":
         print("Error: File 'crypto_dummy.py' not found.")
         exit()
         
-    filename = create_dummy_csv("test_dataset.csv")
+    # FOLDER NAME CONFIGURATION
+    TARGET_FOLDER = "crypt_output"
+    filepath = create_dummy_csv("student_data.csv", folder=TARGET_FOLDER)
 
     password_input = "kelompokkeamanannyadata##"
 
@@ -90,8 +90,8 @@ if __name__ == "__main__":
 
     try:
         # read file
-        print(f"1. read original file: {filename}")
-        with open(filename, "rb") as f:
+        print(f"1. read original file: {filepath}")
+        with open(filepath, "rb") as f:
             original_bytes = f.read()
         print(f"   -> size: {len(original_bytes)} bytes")
 
@@ -100,23 +100,27 @@ if __name__ == "__main__":
         encrypted_bytes = encrypt_data(original_bytes, password_input)
         
         # save to .enc (encoded file)
-        enc_filename = filename + ".enc"
-        with open(enc_filename, "wb") as f:
+        enc_filepath = filepath + ".enc"
+        with open(enc_filepath, "wb") as f:
             f.write(encrypted_bytes)
-        print(f"    -> (encrypted) file saved: {enc_filename}")
+        print(f"    -> (encrypted) file saved: {enc_filepath}")
         print(f"    -> (Header): {encrypted_bytes.hex()[:32]}...")
 
         # decryption process
         print(f"3. decrypting file...")
         # read .enc from disk
-        with open(enc_filename, "rb") as f:
+        with open(enc_filepath, "rb") as f:
             read_encrypted_bytes = f.read()
             
         decrypted_bytes = decrypt_data(read_encrypted_bytes, password_input)
         
         # save .decrypted
-        dec_filename = "recovered_" + filename
-        with open(dec_filename, "wb") as f:
+        # separate folder path and file name
+        folder_path, file_name = os.path.split(filepath)
+        dec_filename = "recovered_" + file_name
+        dec_filepath = os.path.join(folder_path, dec_filename)
+
+        with open(dec_filepath, "wb") as f:
             f.write(decrypted_bytes)
         print(f"    -> file recovery saved: {dec_filename}")
 
@@ -124,7 +128,7 @@ if __name__ == "__main__":
         print(f"Compare original data vs decrypted")
         if original_bytes == decrypted_bytes:
             print("\n[SUCCESS]")
-            print("file recovered:")
+            print("file recovered in folder '{TARGET_FOLDER}'!")
             print("-" * 20)
             print(decrypted_bytes.decode()) # decode bytes to string
             print("-" * 20)
