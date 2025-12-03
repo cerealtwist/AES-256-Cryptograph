@@ -73,19 +73,19 @@ if __name__ == "__main__":
 
     filename = "GeneratedData.csv"
     
-    #create dummy if not exist
-    if not os.path.exists(filename):
-        print(f"[SETUP] Create dummy file '{filename}'...")
-        with open(filename, "w") as f:
-            f.write("ID,Name,GPA,Subject\n")
-            f.write("101,Gres,3.5,Data Science\n")
-            f.write("102,Faiz,3.8,Informatika\n")
-            f.write("103,Haikal,3.2,Sistem Informasi")
-    
+    # Call dummy function from crypto_dummy.py
+    try:
+        from crypto_dummy import create_dummy_csv
+    except ImportError:
+        print("Error: File 'crypto_dummy.py' not found.")
+        exit()
+        
+    filename = create_dummy_csv("test_dataset.csv")
+
     password_input = "kelompokkeamanannyadata##"
 
     print(f"\n{'='*40}")
-    print("   TESTING ENKRIPSI FILE (AES-256)")
+    print("   TESTING FILE ENCRYPTION(AES-256)")
     print(f"{'='*40}")
 
     try:
