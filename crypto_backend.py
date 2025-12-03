@@ -34,52 +34,86 @@ def derive_key(password: str, salt: bytes) -> bytes:
 
     return enc_key, mac_key
 
+# MAIN FUNCTIONS
 def encrypt_data(data: bytes, password: str) -> bytes:
-    #Generate Random Salt 
+    # Generate Random Salt & IV
     salt = os.urandom(SALT_SIZE)
     iv = os.urandom(IV_SIZE)
 
-    key = derive_key(password, salt)
-
-    #Cipher AES 256
-    cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=default_backend())
-    encryptor = cipher.encryptor()
+    # Derive Split Keys
+    enc_key, mac_key = derive_keys(password, salt)
 
     #Padding PKCS7
     padder = padding.PKCS7(BLOCK_SIZE).padder()
     padded_data = padder.update(data) + padder.finalize()
 
-    # Encrypt Padded Data
+    #AES-CBC Encryption
+    cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=default_backend())
+    encryptor = cipher.encryptor()
     ciphertext = encryptor.update(padded_data) + encryptor.finalize()
 
-    # Merge Salt + IV + Ciphertext for Decryption
-    return salt + iv + ciphertext
+    # Message (HEADER + META + CIPHER)
+    message = MAGIC_HEADER + struct.pack("B", VERSION) + salt + iv + ciphertext
 
-def decrypt_data(encrypted_data: bytes, password: str) -> bytes:
+    # Calculate HMAC (Integrity Check)
+    h = hmac.HMAC(mac_key, hashes.SHA256(), backend=default_backend())
+    h.update(message)
+    hmac_tag = h.finalize
+
+    # Merge Message + HMAC Tag
+    return message + hmac_tag
+
+def decrypt_data(data: bytes, password: str) -> bytes:
     try:
-        # Extract salt + iv 
-        salt = encrypted_data[:SALT_SIZE]
-        iv = encrypted_data[SALT_SIZE : SALT_SIZE + IV_SIZE]
-        ciphertext = encrypted_data[SALT_SIZE + IV_SIZE:]
+        # HEADER VALIDATION
+        if not data.startswith(MAGIC_HEADER):
+            raise ValueError("Format file unrecognized (Magic Header Mismatch!).")
+
+        cursor = len(MAGIC_HEADER)
+
+        # VERSION VALIDATION
+        version_byte = data[cursor]
+        if version_byte != VERSION:
+            raise ValueError(f"File version unsupported: {version_byte}")
+        cursor += 1
+
+        # Extract Component
+        salt = data[cursor : cursor + SALT_SIZE]
+        cursor += SALT_SIZE
+
+        iv = data[cursor : cursor + IV_SIZE]
+        cursors += IV_SIZE
+
+        # fetch HMAC (last 32 byte)
+        hmac_tag = data[-32:]
+
+        # fetch ciphertext (before HMAC)
+        ciphertext = data[cursor:-32]
 
         # Derive key
-        key = derive_key(password, salt)
+        enc_key, mac_key = derive_keys(password, salt)
 
-        # Decryptor
-        cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=default_backend())
+        # HMAC Verification
+        verify_content = data[:-32]
+        h = hmac.HMAC(mac_key, hashes.SHA256(), backend=default_backend())
+        h.update(verify_content)
+
+        # raise InvalidSignature if different from tag
+        h.verify(hmac_tag)
+
+        # AES Decryptor
+        cipher = Cipher(algorithms.AES(enc_key), modes.CBC(iv), backend=default_backend())
         decryptor = cipher.decryptor()
-
-        # Decrypt Data
         padded_data = decryptor.update(ciphertext) + decryptor.finalize()
 
         # Unpadding
         unpadder = padding.PKCS7(BLOCK_SIZE).unpadder()
-        original_data = unpadder.update(padded_data) + unpadder.finalize()
+        plaintext = unpadder.update(padded_data) + unpadder.finalize()
 
-        return original_data
+        return plaintext
 
     except Exception as e:
-        raise ValueError("Decryption failed!")
+        raise ValueError("Decryption failed!: {str(e)}")
     
 # Unit testing (manual input)
 if __name__ == "__main__":
