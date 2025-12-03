@@ -117,8 +117,6 @@ def decrypt_data(data: bytes, password: str) -> bytes:
     
 # Unit testing (manual input)
 if __name__ == "__main__":
-    import os
-
     # Call dummy function from crypto_dummy.py
     try:
         from crypto_dummy import create_dummy_csv
