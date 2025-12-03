@@ -1,0 +1,20 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual environment
+.venv/
+env/
+
+# VSCode settings
+.vscode/
+
+# Streamlit logs
+.streamlit/
+
+# Output folder (your encrypted files)
+crypt_output/
+
+# OS-specific junk
+.DS_Store
+Thumbs.db
