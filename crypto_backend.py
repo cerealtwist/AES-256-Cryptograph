@@ -3,6 +3,8 @@ import struct
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import padding, hashes, hmac
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.exceptions import InvalidSignature
+
 
 # CONFIGURATION
 MAGIC_HEADER = b"DATASEC02" 
@@ -61,6 +63,12 @@ def encrypt_data(data: bytes, password: str) -> bytes:
 
 def decrypt_data(data: bytes, password: str) -> bytes:
     try:
+        # MINIMUM FILE SIZE CHECK
+        min_size = len(MAGIC_HEADER) + 1 + SALT_SIZE + IV_SIZE + 32
+        if len(data) < min_size:
+            raise ValueError("Encrypted file too small or corrupted.")
+
+        
         # HEADER VALIDATION
         if not data.startswith(MAGIC_HEADER):
             raise ValueError("Format file unrecognized (Magic Header Mismatch!).")
@@ -107,6 +115,9 @@ def decrypt_data(data: bytes, password: str) -> bytes:
         plaintext = unpadder.update(padded_data) + unpadder.finalize()
 
         return plaintext
+    
+    except InvalidSignature:
+        raise ValueError("Wrong password or file integrity has been compromised.")
 
     except Exception as e:
         raise ValueError(f"Decryption failed!: {str(e)}")
