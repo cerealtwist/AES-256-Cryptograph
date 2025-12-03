@@ -18,7 +18,7 @@ PBKDF2_ITERATIONS = 200000
 BLOCK_SIZE = 128
 
 # KEY DERIVATION (SPLIT KEY)
-def derive_key(password: str, salt: bytes) -> bytes:
+def derive_keys(password: str, salt: bytes) -> bytes:
     kdf = PBKDF2HMAC(
         algorithm=hashes.SHA256(),
         length=KEY_SIZE + HMAC_KEY_SIZE,
@@ -48,7 +48,7 @@ def encrypt_data(data: bytes, password: str) -> bytes:
     padded_data = padder.update(data) + padder.finalize()
 
     #AES-CBC Encryption
-    cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=default_backend())
+    cipher = Cipher(algorithms.AES(enc_key), modes.CBC(iv), backend=default_backend())
     encryptor = cipher.encryptor()
     ciphertext = encryptor.update(padded_data) + encryptor.finalize()
 
@@ -58,7 +58,7 @@ def encrypt_data(data: bytes, password: str) -> bytes:
     # Calculate HMAC (Integrity Check)
     h = hmac.HMAC(mac_key, hashes.SHA256(), backend=default_backend())
     h.update(message)
-    hmac_tag = h.finalize
+    hmac_tag = h.finalize()
 
     # Merge Message + HMAC Tag
     return message + hmac_tag
@@ -82,7 +82,7 @@ def decrypt_data(data: bytes, password: str) -> bytes:
         cursor += SALT_SIZE
 
         iv = data[cursor : cursor + IV_SIZE]
-        cursors += IV_SIZE
+        cursor += IV_SIZE
 
         # fetch HMAC (last 32 byte)
         hmac_tag = data[-32:]
@@ -113,7 +113,7 @@ def decrypt_data(data: bytes, password: str) -> bytes:
         return plaintext
 
     except Exception as e:
-        raise ValueError("Decryption failed!: {str(e)}")
+        raise ValueError(f"Decryption failed!: {str(e)}")
     
 # Unit testing (manual input)
 if __name__ == "__main__":
