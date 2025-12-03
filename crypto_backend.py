@@ -131,7 +131,7 @@ if __name__ == "__main__":
     password_input = "kelompokkeamanannyadata##"
 
     print(f"\n{'='*40}")
-    print("   TESTING FILE ENCRYPTION(AES-256)")
+    print("   TESTING FILE ENCRYPTION(AES-256 + HMAC)")
     print(f"{'='*40}")
 
     try:
@@ -150,7 +150,7 @@ if __name__ == "__main__":
         with open(enc_filepath, "wb") as f:
             f.write(encrypted_bytes)
         print(f"    -> (encrypted) file saved: {enc_filepath}")
-        print(f"    -> (Header): {encrypted_bytes.hex()[:32]}...")
+        print(f"    -> (Magic Header Check): {encrypted_bytes[:10]}")
 
         # decryption process
         print(f"3. decrypting file...")
@@ -176,7 +176,7 @@ if __name__ == "__main__":
             print("\n[SUCCESS]")
             print("file recovered in folder '{TARGET_FOLDER}'!")
             print("-" * 20)
-            print(decrypted_bytes.decode()) # decode bytes to string
+            print(decrypted_bytes.decode()[:100]) # decode bytes to string
             print("-" * 20)
         else:
             print("\n[FAIL].")
