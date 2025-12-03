@@ -1,9 +1,7 @@
 import os
 import struct
-import hmac
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from cryptography.hazmat.primitives import padding
-from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import padding, hashes, hmac
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.backends import default_backend
 
@@ -18,13 +16,12 @@ PBKDF2_ITERATIONS = 200000
 BLOCK_SIZE = 128
 
 # KEY DERIVATION (SPLIT KEY)
-def derive_keys(password: str, salt: bytes) -> bytes:
+def derive_keys(password: str, salt: bytes):
     kdf = PBKDF2HMAC(
         algorithm=hashes.SHA256(),
         length=KEY_SIZE + HMAC_KEY_SIZE,
         salt=salt,
         iterations=PBKDF2_ITERATIONS,
-        backend=default_backend()
     )
     full_key = kdf.derive(password.encode())
     
@@ -48,7 +45,7 @@ def encrypt_data(data: bytes, password: str) -> bytes:
     padded_data = padder.update(data) + padder.finalize()
 
     #AES-CBC Encryption
-    cipher = Cipher(algorithms.AES(enc_key), modes.CBC(iv), backend=default_backend())
+    cipher = Cipher(algorithms.AES(enc_key), modes.CBC(iv))
     encryptor = cipher.encryptor()
     ciphertext = encryptor.update(padded_data) + encryptor.finalize()
 
@@ -56,7 +53,7 @@ def encrypt_data(data: bytes, password: str) -> bytes:
     message = MAGIC_HEADER + struct.pack("B", VERSION) + salt + iv + ciphertext
 
     # Calculate HMAC (Integrity Check)
-    h = hmac.HMAC(mac_key, hashes.SHA256(), backend=default_backend())
+    h = hmac.HMAC(mac_key, hashes.SHA256())
     h.update(message)
     hmac_tag = h.finalize()
 
@@ -102,7 +99,7 @@ def decrypt_data(data: bytes, password: str) -> bytes:
         h.verify(hmac_tag)
 
         # AES Decryptor
-        cipher = Cipher(algorithms.AES(enc_key), modes.CBC(iv), backend=default_backend())
+        cipher = Cipher(algorithms.AES(enc_key), modes.CBC(iv))
         decryptor = cipher.decryptor()
         padded_data = decryptor.update(ciphertext) + decryptor.finalize()
 
