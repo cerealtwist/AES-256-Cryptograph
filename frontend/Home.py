@@ -1,5 +1,12 @@
+import sys
+import os
+current_dir = os.path.dirname(os.path.abspath(__file__))
+backend_dir = os.path.join(os.path.dirname(current_dir), 'backend')
+if backend_dir not in sys.path:
+    sys.path.append(backend_dir)
+
 import streamlit as st
-from backend.crypto_backend import encrypt_data, decrypt_data
+from crypto_backend import encrypt_data, decrypt_data
 import pandas as pd
 import tempfile, os, time, hashlib
 from io import StringIO
@@ -73,7 +80,7 @@ if uploaded and password:
 
         # Confirm Required
         if confirm == "" or confirm != password:
-            st.warning("Please confirm your passwor.")
+            st.warning("Please confirm your password.")
             st.stop()
 
         ext = uploaded.name.lower()
