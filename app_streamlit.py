@@ -1,48 +1,105 @@
 import streamlit as st
 from crypto_backend import encrypt_data, decrypt_data
 import pandas as pd
-import tempfile
-import os
+import tempfile, os, time, hashlib
+from io import StringIO
 
 st.set_page_config(page_title="AES-256 Encryptor", layout="centered")
 st.title("AES-256 File Encryptor | Decryptor")
 
+# Mode Select
 mode = st.radio("Mode:", ["Encrypt", "Decrypt"])
 
+# Password Input + Confirm Pass.
 password = st.text_input("Password", type="password")
+confirm = ""
 
+if mode == "Encrypt":
+    confirm = st.text_input("Confirm Password", type="password")
+
+# Added new pass strength check
+def check_strength(pw):
+    if len(pw) < 6:
+        return "Weak", "red"
+    if len(pw) < 10:
+        return "Medium", "orange"
+    return "Strong", "green"
+
+# Password Strength Indicator
+if password:
+    strength, color = check_strength(password)
+    st.markdown(f"Password Strength: <span style='color:{color}'><b>{strength}</b></span>", unsafe_allow_html=True)
+
+# Confirm validation
+if mode == "Encrypt" and password and confirm:
+    if password != confirm:
+        st.error("Password and Confirm Password do not match.")
+    else:
+        st.success("Password matched.")
+
+# File Upload
 uploaded = st.file_uploader("Upload File")
+
+# Action Log
+log_box = st.empty()
+
+def log(msg):
+    log_box.info(msg)
 
 if uploaded and password:
     # ==========================
     # ENCRYPT
     # ==========================
     if mode == "Encrypt":
-        ext = uploaded.name.lower()
 
+        # Confirm Required
+        if confirm == "" or confirm != password:
+            st.warning("Please confirm your passwor.")
+            st.stop()
+
+        ext = uploaded.name.lower()
         if not(ext.endswith(".csv") or ext.endswith(".xlsx")):
             st.error("Only CSV or XLSX allowed.")
-        else:
-            with tempfile.NamedTemporaryFile(delete=False) as tmp:
-                tmp.write(uploaded.read())
-                tmp_path = tmp.name
+            st.stop()
 
-            # Normalize to CSV bytes
-            if ext.endswith(".csv"):
-                df = pd.read_csv(tmp_path)
-            else:
-                df = pd.read_excel(tmp_path)
+        log("Reading file...")
 
-            raw_bytes = df.to_csv(index=False).encode("utf-8")
+        # Save Temporarily
+        with tempfile.NamedTemporaryFile(delete=False) as tmp:
+            tmp.write(uploaded.read())
+            tmp_path = tmp.name
 
-            encrypted_bytes = encrypt_data(raw_bytes, password)
+        # Normalize to CSV bytes
+        df = pd.read_csv(tmp_path) if ext.endswith(".csv") else pd.read_excel(tmp_path)
+        
+        raw_bytes = df.to_csv(index=False).encode("utf-8")
+        log("Converted to CSV bytes.")
 
-            st.download_button(
-                "Download Encrypted File",
-                data=encrypted_bytes,
-                file_name=uploaded.name + ".enc",
-                mime="application/octet-stream",
-            )
+        encrypted_bytes = encrypt_data(raw_bytes, password)
+        log("Data encrypted successfully.")
+
+        # Metadata
+        st.subheader("Encryption Metadata")
+        st.code(f"""
+AES Mode       : AES-256 CBC
+KDF            : PBKDF2-HMAC-SHA256
+Iterations     : 200,000
+Salt           : 16 bytes
+IV             : 16 bytes
+HMAC           : SHA-256 (32 bytes)
+Output Size    : {len(encrypted_bytes)} bytes
+        """)
+
+         # Ciphertext preview
+        st.subheader("Ciphertext (Hex Preview)")
+        st.text(encrypted_bytes.hex()[:120] + "...")
+
+        st.download_button(
+            "Download Encrypted File (.enc)",
+            data=encrypted_bytes,
+            file_name=uploaded.name + ".enc",
+            mime="application/octet-stream",
+        )
 
     # ==========================
     # DECRYPT
@@ -50,16 +107,19 @@ if uploaded and password:
     else:
         if not uploaded.name.endswith(".enc"):
             st.error("File must be .enc")
+            st.stop()
         else:
             encrypted_bytes = uploaded.read()
+            log("Loaded encrypted file.")
 
             try:
                 decrypted_bytes = decrypt_data(encrypted_bytes, password)
-                decoded = decrypted_bytes.decode("utf-8")
+                log("HMAC Verification Success. Password Correct.")
 
-                # convert to preview
-                df = pd.read_csv(pd.io.common.StringIO(decoded))
-                st.write("### Preview:")
+                decoded = decrypted_bytes.decode("utf-8")
+                df = pd.read_csv(StringIO(decoded))
+
+                st.subheader("Decryption Preview")
                 st.dataframe(df.head())
 
                 st.download_button(
