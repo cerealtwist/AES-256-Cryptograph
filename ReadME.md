@@ -46,7 +46,7 @@ Every encrypted file produced by this app follows a strict binary structure:
 
 ## **📂 Project Structure**
 
-SecureDS-Vault/  
+AES-256/  
 ├── backend/  
 │   ├── crypto\_backend.py   \# Core cryptographic logic (AES, HMAC, KDF)  
 │   └── crypto\_dummy.py     \# Dummy data generator for unit testing  
