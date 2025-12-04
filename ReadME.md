@@ -65,8 +65,7 @@ AES-256/
 
 ### **1\. Clone the Repository**
 
-git clone \[https://github.com/yourusername/SecureDS-Vault.git\](https://github.com/yourusername/SecureDS-Vault.git)  
-cd SecureDS-Vault
+git clone https://github.com/cerealtwist/AES-256-Cryptograph.git
 
 ### **2\. Install Dependencies**
 
