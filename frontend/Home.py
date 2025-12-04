@@ -1,3 +1,5 @@
+import sys
+sys.path.append("../backend")
 import streamlit as st
 from crypto_backend import encrypt_data, decrypt_data
 import pandas as pd
@@ -15,8 +17,12 @@ def add_history(action, filename, output_bytes):
         "sha": h
     })
 
-st.set_page_config(page_title="AES-256 Encryptor", layout="centered")
-st.title("AES-256 File Encryptor | Decryptor")
+st.set_page_config(
+    page_title="Home",
+    layout="centered"
+)
+
+st.title("AES-256 File Encryptor")
 
 # Init History in session
 if "history" not in st.session_state:
