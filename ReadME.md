@@ -4,7 +4,7 @@
 
 This project was developed for the **Data Security Course** (Tugas Keamanan Data) to demonstrate the implementation of robust cryptographic primitives in a user-friendly application.
 
-## **Live Demo: \[https://datasec-aes256-cryptography.streamlit.app/\](https://datasec-aes256-cryptography.streamlit.app/**
+## **Live Demo: [https://datasec-aes256-cryptography.streamlit.app/]**
 
 ## **✨ \[Key Features\]**
 
