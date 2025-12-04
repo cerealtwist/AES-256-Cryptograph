@@ -3,9 +3,24 @@ from crypto_backend import encrypt_data, decrypt_data
 import pandas as pd
 import tempfile, os, time, hashlib
 from io import StringIO
+from datetime import datetime
+
+def add_history(action, filename, output_bytes):
+    h = hashlib.sha256(output_bytes).hexdigest()[:16]
+    st.session_state.history.append({
+        "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "action": action,
+        "file": filename,
+        "size": len(output_bytes),
+        "sha": h
+    })
 
 st.set_page_config(page_title="AES-256 Encryptor", layout="centered")
 st.title("AES-256 File Encryptor | Decryptor")
+
+# Init History in session
+if "history" not in st.session_state:
+    st.session_state.history = []
 
 # Mode Select
 mode = st.radio("Mode:", ["Encrypt", "Decrypt"])
@@ -76,6 +91,7 @@ if uploaded and password:
         log("Converted to CSV bytes.")
 
         encrypted_bytes = encrypt_data(raw_bytes, password)
+        add_history("Encrypt", uploaded.name, encrypted_bytes)
         log("Data encrypted successfully.")
 
         # Metadata
@@ -114,6 +130,7 @@ Output Size    : {len(encrypted_bytes)} bytes
 
             try:
                 decrypted_bytes = decrypt_data(encrypted_bytes, password)
+                add_history("Decrypt", uploaded.name, decrypted_bytes)
                 log("HMAC Verification Success. Password Correct.")
 
                 decoded = decrypted_bytes.decode("utf-8")
