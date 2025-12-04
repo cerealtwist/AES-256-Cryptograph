@@ -1,7 +1,5 @@
-import sys
-sys.path.append("../backend")
 import streamlit as st
-from crypto_backend import encrypt_data, decrypt_data
+from backend.crypto_backend import encrypt_data, decrypt_data
 import pandas as pd
 import tempfile, os, time, hashlib
 from io import StringIO
